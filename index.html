@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>จาก prompt แรก สู่ prompt ที่ใช้ได้จริง — งานวิชาปัญญาประดิษฐ์</title>
+<meta name="description" content="บันทึกการพัฒนา prompt ผ่านเครื่องมือ 6 ชนิด: สร้างภาพด้วย AI, Desmos, Mermaid, LaTeX, NotebookLM และการทำเว็บไซต์">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Trirong:wght@500;600&family=IBM+Plex+Sans+Thai:wght@300;400;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<style>
+:root{
+  --ink:#191E28;
+  --ink-soft:#4A5262;
+  --paper:#FFFFFF;
+  --rule:#E1E4EA;
+
+  --v1-text:#7C838F;
+  --v1-bg:#F2F3F6;
+  --v1-rule:#D3D7DF;
+
+  --v2-text:#0A4E43;
+  --v2-bg:#E6F2EF;
+  --v2-rule:#8CC4B7;
+  --v2-strong:#0B6E5F;
+
+  --mark:#D14524;
+
+  --serif:'Trirong', Georgia, serif;
+  --sans:'IBM Plex Sans Thai', system-ui, sans-serif;
+  --mono:'IBM Plex Mono', 'Courier New', monospace;
+
+  --maxw:64rem;
+}
+
+*{box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:var(--sans); font-weight:300; font-size:17px; line-height:1.75;
+  -webkit-font-smoothing:antialiased;
+}
+@media (prefers-reduced-motion:reduce){ html{scroll-behavior:auto;} *{transition:none !important;} }
+
+a{color:var(--v2-strong);}
+a:focus-visible, button:focus-visible{outline:2px solid var(--mark); outline-offset:3px;}
+
+.wrap{max-width:var(--maxw); margin:0 auto; padding:0 1.5rem;}
+
+/* ---------- HERO ---------- */
+.hero{padding:5.5rem 0 3.5rem; border-bottom:1px solid var(--rule);}
+.hero .kicker{
+  font-family:var(--mono); font-size:.8rem; color:var(--ink-soft);
+  letter-spacing:.02em; margin:0 0 1.2rem;
+}
+.hero h1{
+  font-family:var(--serif); font-weight:600;
+  font-size:clamp(2rem, 5.2vw, 3.4rem); line-height:1.25;
+  margin:0 0 1.1rem; max-width:20ch;
+}
+.hero p.lede{
+  max-width:60ch; margin:0 0 2.6rem; color:var(--ink-soft); font-size:1.06rem;
+}
+
+/* ---------- the recurring motif: v1 -> v2 ---------- */
+.pair{display:grid; grid-template-columns:1fr auto 1fr; gap:1rem; align-items:stretch;}
+@media (max-width:760px){
+  .pair{grid-template-columns:1fr; gap:.6rem;}
+}
+.panel{border-radius:6px; padding:1.15rem 1.3rem;}
+.panel .tag{
+  font-family:var(--mono); font-size:.72rem; display:block; margin-bottom:.55rem;
+}
+.panel p{margin:0; font-size:.97rem; line-height:1.65;}
+.panel ul{margin:.4rem 0 0; padding-left:1.15rem; font-size:.94rem;}
+.panel li{margin:.2rem 0;}
+
+.p-v1{background:var(--v1-bg); border:1px solid var(--v1-rule); color:var(--v1-text);}
+.p-v1 .tag{color:var(--v1-text);}
+.p-v2{background:var(--v2-bg); border:1px solid var(--v2-rule); color:var(--v2-text);}
+.p-v2 .tag{color:var(--v2-strong); font-weight:500;}
+
+.arrow{
+  display:flex; align-items:center; justify-content:center;
+  color:var(--mark); font-size:1.5rem; padding:0 .2rem;
+}
+@media (max-width:760px){ .arrow{transform:rotate(90deg); padding:.15rem 0;} }
+
+.prompt{font-family:var(--mono); font-size:.9rem; line-height:1.6; white-space:pre-wrap;}
+
+/* ---------- NAV ---------- */
+nav.toc{
+  position:sticky; top:0; z-index:20; background:rgba(255,255,255,.94);
+  backdrop-filter:blur(6px); border-bottom:1px solid var(--rule);
+}
+nav.toc ol{
+  list-style:none; display:flex; gap:0; margin:0 auto; padding:0 1.5rem;
+  max-width:var(--maxw); overflow-x:auto;
+}
+nav.toc a{
+  display:block; padding:.8rem .85rem; font-size:.86rem; white-space:nowrap;
+  color:var(--ink-soft); text-decoration:none; border-bottom:2px solid transparent;
+}
+nav.toc a:hover{color:var(--ink); border-bottom-color:var(--v2-rule);}
+nav.toc .num{font-family:var(--mono); color:var(--mark); margin-right:.35rem;}
+
+/* ---------- SECTIONS ---------- */
+section.aspect{padding:4rem 0; border-bottom:1px solid var(--rule);}
+.head{display:flex; gap:1rem; align-items:baseline; margin-bottom:.5rem;}
+.head .n{font-family:var(--mono); font-size:1.5rem; color:var(--mark);}
+.head h2{font-family:var(--serif); font-weight:600; font-size:1.9rem; margin:0; line-height:1.3;}
+.tool{
+  font-family:var(--mono); font-size:.78rem; color:var(--ink-soft);
+  margin:0 0 1.6rem 2.9rem;
+}
+@media (max-width:760px){ .tool{margin-left:0;} }
+
+h3.sub{
+  font-family:var(--sans); font-weight:600; font-size:1rem;
+  margin:2.4rem 0 .8rem; color:var(--ink);
+}
+
+.artifact{
+  border:1px solid var(--rule); border-radius:6px; padding:1.4rem;
+  margin-top:.8rem; overflow-x:auto;
+}
+.artifact img{max-width:100%; height:auto; display:block; border-radius:4px;}
+.placeholder{
+  display:flex; align-items:center; justify-content:center; min-height:190px;
+  background:var(--v1-bg); border:1px dashed var(--v1-rule); border-radius:6px;
+  color:var(--v1-text); font-size:.9rem; text-align:center; padding:1.5rem;
+}
+pre{
+  background:#F7F8FA; border:1px solid var(--rule); border-radius:6px;
+  padding:1rem 1.15rem; overflow-x:auto; font-family:var(--mono);
+  font-size:.85rem; line-height:1.55; margin:.6rem 0 0;
+}
+.reflect{
+  background:var(--v2-bg); border:1px solid var(--v2-rule); border-radius:6px;
+  padding:1.3rem 1.5rem; margin-top:2.2rem;
+}
+.reflect h3{margin:0 0 .6rem; font-size:.95rem; font-weight:600; color:var(--v2-strong);}
+.reflect p{margin:0; color:var(--v2-text); font-size:.97rem;}
+
+.links{display:flex; flex-wrap:wrap; gap:.6rem; margin-top:1.2rem;}
+.links a{
+  font-size:.87rem; text-decoration:none; border:1px solid var(--v2-rule);
+  border-radius:999px; padding:.4rem 1rem; color:var(--v2-strong);
+  transition:background .15s ease;
+}
+.links a:hover{background:var(--v2-bg);}
+
+footer{padding:3.5rem 0 4.5rem; color:var(--ink-soft); font-size:.9rem;}
+footer p{margin:.3rem 0;}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <p class="kicker">รายวิชาปัญญาประดิษฐ์ · การพัฒนา prompt · 2569</p>
+    <h1>คำสั่งที่ดีขึ้น ให้ผลลัพธ์ที่ต่างกันแค่ไหน</h1>
+    <p class="lede">
+      งานชิ้นนี้ทดลองกับเครื่องมือ 6 ชนิด แต่ละชนิดเริ่มจากคำสั่งกว้าง ๆ ที่นึกออกเป็นอย่างแรก
+      แล้วค่อยเติมรายละเอียดเข้าไปจนได้คำสั่งใหม่ หน้านี้เก็บทั้งสองเวอร์ชันไว้คู่กัน
+      เพื่อให้เห็นว่าอะไรคือสิ่งที่เติมเข้าไปแล้วเปลี่ยนผลลัพธ์จริง ๆ
+    </p>
+
+    <div class="pair">
+      <div class="panel p-v1">
+        <span class="tag">คำสั่งแรก</span>
+        <p class="prompt">วาดรูปเกี่ยวกับ Machine Learning</p>
+      </div>
+      <div class="arrow" aria-hidden="true">→</div>
+      <div class="panel p-v2">
+        <span class="tag">คำสั่งใหม่</span>
+        <p class="prompt">ภาพประกอบแนวไอโซเมตริก แสดงขั้นตอนการทำงานของ Machine Learning
+เรียงจากซ้ายไปขวา 4 ขั้น: ฐานข้อมูล → ตะแกรงคัดกรอง →
+โครงข่ายประสาท 3 ชั้น → กราฟเส้นพุ่งขึ้น
+โทนสีเขียวเข้มกับส้มอิฐ พื้นหลังสีขาวสะอาด
+ไม่ต้องมีตัวอักษรใด ๆ ในภาพ</p>
+      </div>
+    </div>
+  </div>
+</header>
+
+<nav class="toc" aria-label="สารบัญ">
+  <ol>
+    <li><a href="#a1"><span class="num">1</span>สร้างภาพด้วย AI</a></li>
+    <li><a href="#a2"><span class="num">2</span>Desmos</a></li>
+    <li><a href="#a3"><span class="num">3</span>Mermaid</a></li>
+    <li><a href="#a4"><span class="num">4</span>LaTeX</a></li>
+    <li><a href="#a5"><span class="num">5</span>NotebookLM</a></li>
+    <li><a href="#a6"><span class="num">6</span>เว็บไซต์</a></li>
+  </ol>
+</nav>
+
+<main>
+
+<!-- ============ 1 ============ -->
+<section class="aspect" id="a1">
+  <div class="wrap">
+    <div class="head"><span class="n">1</span><h2>สร้างภาพด้วย AI</h2></div>
+    <p class="tool">เครื่องมือ: Canva Magic Media</p>
+
+    <div class="pair">
+      <div class="panel p-v1">
+        <span class="tag">คำสั่งแรก (zero-shot)</span>
+        <p class="prompt">วาดรูปเกี่ยวกับ Machine Learning</p>
+      </div>
+      <div class="arrow" aria-hidden="true">→</div>
+      <div class="panel p-v2">
+        <span class="tag">คำสั่งใหม่ (few-shot)</span>
+        <p class="prompt">ภาพประกอบไอโซเมตริก ขั้นตอนการทำงานของ Machine Learning
+เรียงซ้ายไปขวา 4 ขั้น: ฐานข้อมูล → ตะแกรงคัดกรอง →
+โครงข่ายประสาท 3 ชั้น → กราฟเส้นพุ่งขึ้น
+เส้นเชื่อมโยงแต่ละขั้นเป็นเส้นโค้งบาง
+สีเขียวเข้ม #0B6E5F กับส้มอิฐ #D14524 พื้นหลังขาว
+สัดส่วน 16:9 ไม่ต้องมีตัวอักษรในภาพ</p>
+      </div>
+    </div>
+
+    <h3 class="sub">ผลลัพธ์</h3>
+    <div class="pair">
+      <div class="artifact">
+        <img src="img/1-image-v1.png" alt="ผลลัพธ์แรก: ภาพจากคำสั่ง zero-shot">
+      </div>
+      <div class="arrow" aria-hidden="true">→</div>
+      <div class="artifact">
+        <img src="img/1-image-v2.png" alt="ผลลัพธ์ใหม่: ภาพไอโซเมตริกขั้นตอน Machine Learning 4 ขั้น">
+      </div>
+    </div>
+
+    <div class="reflect">
+      <h3>สิ่งที่ได้เรียนรู้</h3>
+      <p>คำสั่งแรกไม่ได้บอกว่าจะให้ภาพ "เล่าอะไร" ผลที่ได้จึงเป็นหุ่นยนต์กับตัวเลขลอย ๆ
+      ที่ใช้ประกอบรายงานไม่ได้ สิ่งที่ทำให้ต่างกันคือการเปลี่ยนจากการบอกหัวข้อ
+      มาเป็นการบอกองค์ประกอบในภาพทีละชิ้น พร้อมทิศทางการอ่าน โทนสี และข้อห้าม
+      โดยเฉพาะ "ไม่ต้องมีตัวอักษร" ซึ่งแก้ปัญหาที่ AI มักสะกดคำผิดในภาพ</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 2 ============ -->
+<section class="aspect" id="a2">
+  <div class="wrap">
+    <div class="head"><span class="n">2</span><h2>ความสัมพันธ์ทางคณิตศาสตร์</h2></div>
+    <p class="tool">เครื่องมือ: Desmos Graphing Calculator</p>
+
+    <div class="pair">
+      <div class="panel p-v1">
+        <span class="tag">คำสั่งแรก (zero-shot)</span>
+        <p class="prompt">ช่วยสร้างกราฟใน Desmos เกี่ยวกับ Machine Learning หน่อย</p>
+      </div>
+      <div class="arrow" aria-hidden="true">→</div>
+      <div class="panel p-v2">
+        <span class="tag">คำสั่งใหม่ (few-shot)</span>
+        <p class="prompt">สร้างชุดสมการสำหรับ Desmos เพื่อเปรียบเทียบ activation
+function 3 ตัวในกราฟเดียวกัน: sigmoid, tanh, ReLU
+ให้ทั้งสามตัวใช้ตัวแปร a ร่วมกันเป็น slider ปรับความชัน
+(min 0.1 max 5 step 0.1) เพิ่มเส้นประ y=0.5 เป็นเกณฑ์ตัดสิน
+จำกัดช่วง -6 ≤ x ≤ 6
+ตอบเป็นบรรทัดที่คัดลอกวางใน Desmos ได้เลย บรรทัดละ 1 ช่อง
+พร้อมบอกวิธีตั้งค่า slider</p>
+      </div>
+    </div>
+
+    <h3 class="sub">ผลลัพธ์</h3>
+    <div class="pair">
+      <div class="artifact">
+        <img src="img/2-desmos-v1.png" alt="ผลลัพธ์แรก: กราฟ sigmoid เส้นเดียวใน Desmos">
+      </div>
+      <div class="arrow" aria-hidden="true">→</div>
+      <div class="artifact">
+        <img src="img/2-desmos-v2.png" alt="ผลลัพธ์ใหม่: กราฟ sigmoid, tanh, ReLU พร้อม slider ใน Desmos">
+      </div>
+    </div>
+
+    <pre>a=1
+f(x)=\frac{1}{1+e^{-ax}}
+g(x)=\tanh(ax)
+h(x)=\max(0,ax)
+y=0.5</pre>
+
+    <div class="links">
+      <a href="https://www.desmos.com/calculator/go7op17ozu" data-note="ใส่ลิงก์ Share จาก Desmos ตรงนี้">เปิดกราฟใน Desmos</a>
+    </div>
+
+    <div class="reflect">
+      <h3>สิ่งที่ได้เรียนรู้</h3>
+      <p>คำสั่งแรกได้คำอธิบายเป็นย่อหน้ายาวกับสมการเดียว ซึ่งเอาไปใช้ต่อไม่ได้ทันที
+      จุดที่เปลี่ยนผลลัพธ์มากที่สุดคือการระบุ <em>รูปแบบของคำตอบ</em> ว่า
+      "ตอบเป็นบรรทัดที่คัดลอกวางได้เลย บรรทัดละ 1 ช่อง"
+      เพราะทำให้คำตอบกลายเป็นของที่ใช้งานได้ ไม่ใช่แค่ความรู้</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 3 ============ -->
+<section class="aspect" id="a3">
+  <div class="wrap">
+    <div class="head"><span class="n">3</span><h2>ไดอะแกรมจากโค้ด Mermaid</h2></div>
+    <p class="tool">เครื่องมือ: Mermaid Live Editor</p>
+
+    <div class="pair">
+      <div class="panel p-v1">
+        <span class="tag">คำสั่งแรก (zero-shot)</span>
+        <p class="prompt">เขียน mermaid diagram เกี่ยวกับ machine learning</p>
+      </div>
+      <div class="arrow" aria-hidden="true">→</div>
+      <div class="panel p-v2">
+        <span class="tag">คำสั่งใหม่ (few-shot)</span>
+        <p class="prompt">เขียน Mermaid flowchart TD แสดงวงจรการทำโครงการ ML
+โดยต้องมี:
+- subgraph 3 กลุ่ม: เตรียมข้อมูล / ฝึกและปรับจูน / ประเมินและนำไปใช้
+- decision node อย่างน้อย 3 จุด พร้อมป้ายกำกับที่เส้น
+- เส้นย้อนกลับเมื่อเจอ underfitting และ overfitting
+- เส้นประจาก monitoring กลับไปเก็บข้อมูลใหม่ (data drift)
+- classDef กำหนดสีแยกตามกลุ่ม
+ข้อความในกล่องเป็นภาษาไทย ใช้ &lt;br/&gt; ขึ้นบรรทัด</p>
+      </div>
+    </div>
+
+    <h3 class="sub">ผลลัพธ์</h3>
+    <div class="pair">
+      <div class="artifact">
+        <pre>graph TD
+    A[Data] --&gt; B[Model]
+    B --&gt; C[Prediction]</pre>
+      </div>
+      <div class="arrow" aria-hidden="true">→</div>
+      <div class="artifact">
+        <img src="img/3-mermaid-v2.png" alt="ผลลัพธ์ใหม่: flowchart วงจรโครงการ ML จาก Mermaid">
+      </div>
+    </div>
+
+    <div class="reflect">
+      <h3>สิ่งที่ได้เรียนรู้</h3>
+      <p>คำสั่งแรกได้ไดอะแกรมเส้นตรง 3 กล่อง ซึ่งถูกต้องแต่ไม่ได้สื่ออะไรเพิ่ม
+      เพราะ ML จริง ๆ ไม่ใช่เส้นตรงแต่เป็นวงจรที่ต้องวนกลับ
+      การเติม "ต้องมีเส้นย้อนกลับเมื่อเจอ overfitting" เข้าไปในคำสั่ง
+      บังคับให้โครงสร้างของไดอะแกรมสะท้อนความจริงของกระบวนการ
+      บทเรียนคือคำสั่งที่ดีต้องบอกโครงสร้างที่ต้องการ ไม่ใช่แค่หัวข้อ</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 4 ============ -->
+<section class="aspect" id="a4">
+  <div class="wrap">
+    <div class="head"><span class="n">4</span><h2>บทความวิชาการด้วย LaTeX</h2></div>
+    <p class="tool">เครื่องมือ: Overleaf</p>
+
+    <div class="pair">
+      <div class="panel p-v1">
+        <span class="tag">คำสั่งแรก (zero-shot)</span>
+        <p class="prompt">เขียนบทความ LaTeX เรื่อง machine learning</p>
+      </div>
+      <div class="arrow" aria-hidden="true">→</div>
+      <div class="panel p-v2">
+        <span class="tag">คำสั่งใหม่ (few-shot)</span>
+        <p class="prompt">เขียนไฟล์ .tex ฉบับสมบูรณ์ที่คอมไพล์ผ่านบน Overleaf
+ด้วย XeLaTeX และแสดงภาษาไทยได้ถูกต้อง
+ข้อกำหนด:
+- ใช้ fontspec โหลด Sarabun จากโฟลเดอร์ ./fonts/
+- ตั้ง \XeTeXlinebreaklocale "th" เพื่อตัดคำไทย
+- documentclass article 12pt a4paper margin 2.5cm
+- ต้องมี abstract, สมการที่มีเลขกำกับและอ้างอิงด้วย \eqref
+- ตารางเปรียบเทียบอัลกอริทึม 3 ชนิด ใช้ booktabs
+- bibliography 3 รายการ
+เนื้อหาเป็นภาษาไทย ศัพท์เทคนิคใส่ภาษาอังกฤษวงเล็บครั้งแรก</p>
+      </div>
+    </div>
+
+    <h3 class="sub">ผลลัพธ์</h3>
+    <div class="pair">
+      <div class="artifact">
+        <img src="img/4-latex-v1.png" alt="ผลลัพธ์แรก: หน้า Overleaf ที่ภาษาไทยแสดงผลไม่ได้">
+      </div>
+      <div class="arrow" aria-hidden="true">→</div>
+      <div class="artifact">
+        <img src="img/4-latex-v2.png" alt="ผลลัพธ์ใหม่: บทความภาษาไทยที่คอมไพล์ด้วย XeLaTeX">
+      </div>
+    </div>
+
+    <div class="links">
+      <a href="files/main.tex" download>ดาวน์โหลด main.tex</a>
+      <a href="files/article.pdf" download>ดาวน์โหลด PDF</a>
+    </div>
+
+    <div class="reflect">
+      <h3>สิ่งที่ได้เรียนรู้</h3>
+      <p>คำสั่งแรกได้ไฟล์ที่ดูเหมือนใช้ได้ แต่คอมไพล์แล้วภาษาไทยหายทั้งหมด
+      เพราะไม่ได้บอกว่าจะใช้ compiler ตัวไหน
+      นี่คือกรณีที่ชัดที่สุดว่าคำสั่งต้องรวม <em>ข้อจำกัดของสภาพแวดล้อม</em> เข้าไปด้วย
+      ไม่ใช่แค่บอกว่าอยากได้อะไร แต่ต้องบอกว่ามันจะต้องไปทำงานที่ไหน</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 5 ============ -->
+<section class="aspect" id="a5">
+  <div class="wrap">
+    <div class="head"><span class="n">5</span><h2>สไลด์สรุปด้วย NotebookLM</h2></div>
+    <p class="tool">เครื่องมือ: Google NotebookLM</p>
+
+    <div class="pair">
+      <div class="panel p-v1">
+        <span class="tag">คำสั่งแรก (zero-shot)</span>
+        <p class="prompt">สรุปเอกสารนี้ให้หน่อย</p>
+      </div>
+      <div class="arrow" aria-hidden="true">→</div>
+      <div class="panel p-v2">
+        <span class="tag">คำสั่งใหม่ (few-shot)</span>
+        <p class="prompt">สร้างสไลด์สรุปสำหรับนำเสนอในชั้นเรียน 10 นาที
+ผู้ฟังคือนักศึกษาปี 2 ที่เพิ่งเริ่มเรียน AI
+โครงสร้างที่ต้องการ:
+1 หน้าเปิด บอกคำถามหลักของงาน
+6 หน้ากลาง หน้าละ 1 เครื่องมือ แต่ละหน้าต้องมี
+  คำสั่งเดิม คำสั่งใหม่ และสิ่งที่เปลี่ยนไประหว่างสองอัน
+1 หน้าปิด สรุปหลักการ 3 ข้อที่ใช้ได้กับทุกเครื่องมือ
+ใช้ภาษาไทย ประโยคสั้น หน้าละไม่เกิน 5 บรรทัด
+ไม่ต้องใส่ศัพท์เทคนิคที่ยังไม่ได้อธิบาย</p>
+      </div>
+    </div>
+
+    <h3 class="sub">ผลลัพธ์</h3>
+    <div class="pair">
+      <div class="artifact">
+        <img src="img/5-notebooklm-v1.png" alt="ผลลัพธ์แรก: สรุปเอกสารจาก NotebookLM">
+      </div>
+      <div class="arrow" aria-hidden="true">→</div>
+      <div class="artifact">
+        <img src="img/5-notebooklm-v2.png" alt="ผลลัพธ์ใหม่: สไลด์สรุปจาก NotebookLM">
+      </div>
+    </div>
+
+    <div class="reflect">
+      <h3>สิ่งที่ได้เรียนรู้</h3>
+      <p>NotebookLM ตอบจากเอกสารที่เราอัปโหลดเท่านั้น คุณภาพของผลลัพธ์
+      จึงขึ้นกับสองอย่างพร้อมกันคือแหล่งข้อมูลและคำสั่ง
+      คำสั่งแรกได้สรุปที่ถูกต้องแต่กระจายไปทุกหัวข้อเท่า ๆ กัน
+      การระบุผู้ฟัง เวลา และจำนวนบรรทัดต่อหน้า ทำให้ระบบตัดสินใจแทนเราได้ว่า
+      อะไรควรอยู่และอะไรควรตัดทิ้ง</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 6 ============ -->
+<section class="aspect" id="a6">
+  <div class="wrap">
+    <div class="head"><span class="n">6</span><h2>เว็บไซต์บน GitHub Pages</h2></div>
+    <p class="tool">เครื่องมือ: GitHub Pages · หน้าที่คุณกำลังอ่านอยู่นี้</p>
+
+    <div class="pair">
+      <div class="panel p-v1">
+        <span class="tag">คำสั่งแรก (zero-shot)</span>
+        <p class="prompt">ทำเว็บไซต์เกี่ยวกับ machine learning ให้หน่อย</p>
+      </div>
+      <div class="arrow" aria-hidden="true">→</div>
+      <div class="panel p-v2">
+        <span class="tag">คำสั่งใหม่ (few-shot)</span>
+        <p class="prompt">สร้างเว็บไฟล์เดียว index.html สำหรับ GitHub Pages
+เพื่อรวบรวมผลงาน 6 ชิ้นจากวิชา AI
+ข้อกำหนด:
+- ทุกหัวข้อแสดงคำสั่งเดิมกับคำสั่งใหม่คู่กัน เป็นลวดลายหลักของทั้งเว็บ
+  คำสั่งเดิมใช้โทนเทาจาง คำสั่งใหม่ใช้โทนเขียวเข้ม
+- มีแถบสารบัญติดขอบบนที่กดแล้วเลื่อนไปแต่ละหัวข้อ
+- ฟอนต์ไทยจาก Google Fonts (หัวข้อ Trirong / เนื้อหา IBM Plex Sans Thai)
+- responsive ลงถึงจอมือถือ มี focus ring ชัดเจน
+  และเคารพ prefers-reduced-motion
+- CSS ฝังในไฟล์เดียว ไม่ต้องใช้ framework</p>
+      </div>
+    </div>
+
+    <h3 class="sub">ผลลัพธ์</h3>
+    <div class="pair">
+      <div class="artifact">
+        <img src="img/6-web-v1.png" alt="ผลลัพธ์แรก: หน้าเว็บ v1-zero-shot.html">
+      </div>
+      <div class="arrow" aria-hidden="true">→</div>
+      <div class="artifact">
+        <p style="padding:2rem;text-align:center">คือหน้าที่คุณกำลังอ่านอยู่นี้</p>
+      </div>
+    </div>
+
+    <div class="links">
+      <a href="v1-zero-shot.html">ดูเว็บเวอร์ชันแรก</a>
+      <a href="https://github.com/" data-note="เปลี่ยนเป็นลิงก์ repo ของตัวเอง">ดูซอร์สโค้ดบน GitHub</a>
+    </div>
+
+    <div class="reflect">
+      <h3>สิ่งที่ได้เรียนรู้</h3>
+      <p>คำสั่งแรกได้หน้าเว็บที่ถูกต้องตามหลักภาษา HTML แต่ไม่มีอะไรเป็นของงานนี้เลย
+      เพราะไม่ได้บอกว่าเว็บนี้มีไว้ทำอะไรและใครจะอ่าน
+      สิ่งที่เปลี่ยนผลลัพธ์มากที่สุดไม่ใช่รายการฟีเจอร์ แต่เป็นการบอก
+      <em>แนวคิดหลักของการออกแบบ</em> ว่าให้ทุกหัวข้อแสดงคำสั่งเดิมคู่กับคำสั่งใหม่
+      เพราะข้อเดียวนี้กำหนดทั้งโครงหน้า สี และลำดับการอ่านของทั้งเว็บ</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ สรุปรวม ============ -->
+<section class="aspect" id="conclusion">
+  <div class="wrap">
+    <div class="head"><span class="n">·</span><h2>สามอย่างที่ใช้ได้กับทุกเครื่องมือ</h2></div>
+
+    <div class="reflect" style="margin-top:1rem">
+      <h3>1. บอกรูปแบบของคำตอบ ไม่ใช่แค่หัวข้อ</h3>
+      <p>"อธิบาย sigmoid" กับ "ให้สมการ sigmoid เป็นบรรทัดที่วางใน Desmos ได้เลย"
+      ได้ผลต่างกันสิ้นเชิง ทั้งที่ถามเรื่องเดียวกัน</p>
+    </div>
+
+    <div class="reflect">
+      <h3>2. บอกข้อจำกัดของที่ที่ผลลัพธ์จะไปอยู่</h3>
+      <p>ไฟล์ LaTeX ที่ไม่รู้ว่าจะคอมไพล์ด้วย XeLaTeX ย่อมแสดงภาษาไทยไม่ได้
+      เครื่องมือปลายทางเป็นข้อมูลที่ต้องอยู่ในคำสั่ง</p>
+    </div>
+
+    <div class="reflect">
+      <h3>3. บอกสิ่งที่ไม่ต้องการด้วย</h3>
+      <p>"ไม่ต้องมีตัวอักษรในภาพ" หรือ "ไม่ต้องใส่ศัพท์ที่ยังไม่ได้อธิบาย"
+      ตัดปัญหาที่รู้อยู่แล้วว่าจะเกิดออกไปตั้งแต่ต้น เร็วกว่าการแก้ทีหลัง</p>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <p>นายกฤตนัน  มงคลหัตถี 2410711101022</p>
+    <p>GE931-1 ปัญญาประดิษฐ์เบื่องต้น   · ส่งงานการพัฒนา prompt</p>
+  </div>
+</footer>
+
+</body>
+</html>
